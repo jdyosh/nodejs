@@ -7,12 +7,13 @@ function templateHTML(title, list, body){
   <!doctype html>
   <html>
   <head>
-    <title>WEB1 - ${title}</title>
+    <title>WEB - ${title}</title>
     <meta charset="utf-8">
   </head>
   <body>
     <h1><a href="/">WEB</a></h1>
       ${list}
+      <a href="/create">Create</a>
       ${body}
   </body>
   </html>
@@ -35,14 +36,13 @@ var app = http.createServer(function(request,response){
     var queryData = url.parse(_url, true).query;
     var pathname = url.parse(_url, true).pathname;
     // path와 pathname 차이
-
+    //console.log(pathname);
 
     if(pathname === '/'){
       if(queryData.id === undefined){
 
         fs.readdir('./data',function(error, fileList){
           //console.log(fileList);
-
           var description = 'Hi How are you doin?';
           var title = 'Welcome';
           var list = templateList(fileList);
@@ -64,6 +64,25 @@ var app = http.createServer(function(request,response){
           });
         });
       }
+    }else if(pathname === '/create'){
+      fs.readdir('./data',function(error, fileList){
+        //console.log(fileList);
+        var title = 'WEB - Create';
+        var list = templateList(fileList);
+        var template = templateHTML(title, list, `
+        <form action="http://localhost:3000/process_create" method="post">
+        <p><input type="text" name="title" placeholder="title"></p>
+        <p>
+          <textarea name="description" placeholder="description"></textarea>
+        </p>
+        <p>
+          <input type="submit">
+        </p>
+        </form>
+        `);
+          response.writeHead(200);
+          response.end(template);
+      });
     }
     else{
       response.writeHead(404);
@@ -73,7 +92,5 @@ var app = http.createServer(function(request,response){
  
     //port번호를 입력(Why HOST(domain)에 여러 포트가 있을 수 있어서) + 기본값 80
     //http(protocol)://opentutorials.org(host or domain):3000(port)/main(path)?id=HTML&page=12(query String)
-
- 
 
 app.listen(3000);
