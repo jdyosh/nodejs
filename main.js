@@ -96,9 +96,12 @@ var app = http.createServer(function(request,response){
         var title = post.title
         var description = post.description
         //console.log(post.title)
+        fs.writeFile(`data/${title}`, description, 'utf-8', function(err){
+          response.writeHead(302, {Location: `/?id=${title}`});
+          response.end('Success');
+        });
       }); 
-      response.writeHead(200);
-      response.end('Success');
+
     }
     else{
       response.writeHead(404);
