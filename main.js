@@ -2,43 +2,9 @@ var http = require('http');
 var fs = require('fs');
 var url = require('url');
 var qs = require('querystring');
+var template = require('./lib/template.js');
+//Object를 Module로 만들어서 사용(복잡성 축소)
 
-//refactoring
-var template = {
-  // template object에 있는 html는 property다.
-  html:function (title, list, body, control){
-    return `
-    <!doctype html>
-    <html>
-    <head>
-      <title>WEB - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-        ${list}
-        ${control}
-        ${body}
-    </body>
-    </html>
-    `;
-  },
-
-  list:function(fileList){
-    var list = `<ul>`
-    var i = 0;
-    while(i<fileList.length){
-      list = list + `<li><a href="/?id=${fileList[i]}">${fileList[i]}</a></li>`;
-      i=i+1;
-    }
-    list = list+`</ul>`;
-    return list;
-  }
-  
-}
-
-
- 
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
