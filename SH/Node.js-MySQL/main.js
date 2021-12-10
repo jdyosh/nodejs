@@ -6,6 +6,7 @@ var template = require('./lib/template.js');
 var path = require('path');
 var sanitizeHtml = require('sanitize-html');
 var mysql = require('mysql');
+const {auth} = require("mysql/lib/protocol/Auth");
 var db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -66,24 +67,29 @@ var app = http.createServer(function(request,response){
             });
         }
     } else if (pathname === '/create') {            // 생성 화면
-        db.query(`SELECT * FROM topic`, function (error, topics) {
-            var title = 'Create';
-            var list = template.list(topics);
-            var html = template.HTML(title, list, `
+        db.query(`SELECT * FROM author`, function (error, authors) {
+            db.query(`SELECT * FROM topic`, function (error2, topics) {
+                var title = 'Create';
+                var list = template.list(topics);
+                var html = template.HTML(title, list, `
                 <form action="/create_process" method="post">
                     <p><input type="text" name="title" placeholder="title"></p>
                     <p>
                         <textarea name="description" placeholder="description"></textarea>
                     </p>
                     <p>
+                        ${template.authorSelect(authors)}
+                    </p>
+                    <p>
                         <input type="submit">
                     </p>
                 </form>`,
-                `<a href="/create">create</a>`
-            );
+                    `<a href="/create">create</a>`
+                );
 
-            response.writeHead(200);
-            response.end(html);
+                response.writeHead(200);
+                response.end(html);
+            });
         });
 
     } else if (pathname === '/create_process') {        // 생성
@@ -97,7 +103,7 @@ var app = http.createServer(function(request,response){
             var post = qs.parse(body);
 
             db.query(`INSERT INTO topic(title, description, created, author_id) VALUES (?, ?, NOW(), ?)`,
-                [post.title, post.description, 1], function (error, result) {
+                [post.title, post.description, post.author], function (error, result) {
                     if (error) {
                         throw error;
                     }
