@@ -124,8 +124,9 @@ var app = http.createServer(function(request,response){
                     throw error2;
                 }
 
-                var list = template.list(topics);
-                var html = template.HTML(topic[0].title, list, `
+                db.query(`SELECT * FROM author`, function (error, authors) {
+                    var list = template.list(topics);
+                    var html = template.HTML(topic[0].title, list, `
                     <form action="/update_process" method="post">
                         <input type="hidden" name="id" value="${topic[0].id}">
                         <p><input type="text" name="title" placeholder="title" value="${topic[0].title}"></p>
@@ -133,13 +134,16 @@ var app = http.createServer(function(request,response){
                             <textarea name="description" placeholder="description">${topic[0].description}</textarea>
                         </p>
                         <p>
+                            ${template.authorSelect(authors, topic[0].author_id)}
+                        <p>
                             <input type="submit">
                         </p>
                     </form>`, ''
-                );
+                    );
 
-                response.writeHead(200);
-                response.end(html);
+                    response.writeHead(200);
+                    response.end(html);
+                })
             });
         });
     } else if(pathname === '/update_process'){      // 수정
@@ -152,8 +156,8 @@ var app = http.createServer(function(request,response){
         request.on('end', function(){
             var post = qs.parse(body);
 
-            db.query(`UPDATE topic SET title = ?, description = ?, author_id = 1 WHERE id = ?`,
-                [post.title, post.description, post.id], function (error, result) {
+            db.query(`UPDATE topic SET title = ?, description = ?, author_id = ? WHERE id = ?`,
+                [post.title, post.description, post.author, post.id], function (error, result) {
                     if (error) {
                         throw error;
                     }
