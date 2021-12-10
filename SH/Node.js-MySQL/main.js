@@ -40,7 +40,7 @@ var app = http.createServer(function(request,response){
                     throw error;
                 }
 
-                db.query(`SELECT * FROM topic WHERE id = ?`, [queryData.id], function (error2, topic) {
+                db.query(`SELECT * FROM topic LEFT JOIN author ON topic.author_id = author.id WHERE topic.id = ?`, [queryData.id], function (error2, topic) {
                     if (error2) {
                       throw error2;
                     }
@@ -49,7 +49,9 @@ var app = http.createServer(function(request,response){
                     var description = topic[0].description;
                     var list = template.list(topics);
                     var html = template.HTML(title, list,
-                        `<h2>${title}</h2>${description}`,
+                        `<h2>${title}</h2>
+                               ${description}
+                               <p>by ${topic[0].name}</p>`,
                         `<a href="/create">create</a>
                                 <a href="/update?id=${queryData.id}">update</a>
                                   <form action="delete_process" method="post">
@@ -63,7 +65,7 @@ var app = http.createServer(function(request,response){
                 });
             });
         }
-    } else if (pathname === '/create') {            // 생성화면
+    } else if (pathname === '/create') {            // 생성 화면
         db.query(`SELECT * FROM topic`, function (error, topics) {
             var title = 'Create';
             var list = template.list(topics);
@@ -105,7 +107,7 @@ var app = http.createServer(function(request,response){
             });
         });
 
-    } else if (pathname === '/update') {        // 수정
+    } else if (pathname === '/update') {        // 수정 화면
         db.query(`SELECT * FROM topic`, function (error, topics) {
             if (error) {
                 throw error;
@@ -155,7 +157,7 @@ var app = http.createServer(function(request,response){
                 });
         });
 
-    } else if(pathname === '/delete_process'){
+    } else if(pathname === '/delete_process'){      // 삭제
         var body = '';
 
         request.on('data', function(data){
