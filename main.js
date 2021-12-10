@@ -4,7 +4,7 @@ var url = require('url');
 var qs = require('querystring');
 var template = require('./lib/template.js');
 //Object를 Module로 만들어서 사용(복잡성 축소)
-
+var path = require('path');
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -37,8 +37,8 @@ var app = http.createServer(function(request,response){
       else{
           fs.readdir('./data',function(error, fileList){
             //console.log(fileList);
-
-            fs.readFile(`data/${queryData.id}`,'utf-8',function(err,description){
+            var filteredId = path.parse(queryData.id).base
+            fs.readFile(`data/${filteredId}`,'utf-8',function(err,description){
               var title = queryData.id;             
               var list = template.list(fileList);
               var html = template.html(title, list, 
@@ -94,7 +94,8 @@ var app = http.createServer(function(request,response){
     }
     else if(pathname === '/update'){
       fs.readdir('./data',function(error, fileList){
-        fs.readFile(`data/${queryData.id}`,'utf-8',function(err,description){
+        var filteredId = path.parse(queryData.id).base
+        fs.readFile(`data/${filteredId}`,'utf-8',function(err,description){
           var title = queryData.id;             
           var list = template.list(fileList);
           var html = template.html(title, list, 
@@ -124,11 +125,12 @@ var app = http.createServer(function(request,response){
       }); 
       request.on('end',function(){
         var post = qs.parse(body);
-        var id = post.id
+        //var id = post.id
+        var filteredId = path.parse(queryData.id).base
         var title = post.title
         var description = post.description
         console.log(post)
-        fs.rename(`data/${id}`, `data/${title}`, function(error){
+        fs.rename(`data/${filteredId}`, `data/${title}`, function(error){
           fs.writeFile(`data/${title}`, description, 'utf-8', function(err){
             response.writeHead(302, {Location: `/?id=${title}`});
             response.end('Success');
@@ -144,8 +146,9 @@ var app = http.createServer(function(request,response){
       }); 
       request.on('end',function(){
         var post = qs.parse(body);
-        var id = post.id
-        fs.unlink(`data/${id}`, function(error){
+        //var id = post.id
+        var filteredId = path.parse(queryData.id).base
+        fs.unlink(`data/${filteredId}`, function(error){
           response.writeHead(302, {Location: `/`});
           response.end('Success');
         });
