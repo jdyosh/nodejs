@@ -2,7 +2,6 @@ var http = require('http');
 var url = require('url');
 var topic = require('./lib/topic');
 var author = require('./lib/author');
-const {auth} = require("mysql/lib/protocol/Auth");
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -17,22 +16,18 @@ var app = http.createServer(function(request,response){
         }
     } else if (pathname === '/create') {            // 생성 화면
         topic.create(request, response);
-
     } else if (pathname === '/create_process') {    // 생성
         topic.create_process(request, response);
-
     } else if (pathname === '/update') {            // 수정 화면
         topic.update(request, response);
-
     } else if(pathname === '/update_process'){      // 수정
         topic.update_process(request, response);
-
     } else if(pathname === '/delete_process'){      // 삭제
         topic.delete_process(request, response);
-
     } else if (pathname === '/author') {
         author.home(request, response);
-
+    } else if (pathname === '/author/create_process') {
+        author.create_process(request, response);
     } else {
         response.writeHead(404);
         response.end('Not found');
