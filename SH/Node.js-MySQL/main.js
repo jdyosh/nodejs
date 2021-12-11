@@ -1,9 +1,8 @@
 var http = require('http');
 var url = require('url');
-var qs = require('querystring');
-var template = require('./lib/template.js');
-var db = require('./lib/db');
 var topic = require('./lib/topic');
+var author = require('./lib/author');
+const {auth} = require("mysql/lib/protocol/Auth");
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -31,9 +30,12 @@ var app = http.createServer(function(request,response){
     } else if(pathname === '/delete_process'){      // 삭제
         topic.delete_process(request, response);
 
+    } else if (pathname === '/author') {
+        author.home(request, response);
+
     } else {
-      response.writeHead(404);
-      response.end('Not found');
+        response.writeHead(404);
+        response.end('Not found');
     }
 });
 app.listen(3000);
