@@ -2,7 +2,6 @@ var http = require('http');
 var url = require('url');
 var topic = require('./lib/topic');
 var author = require('./lib/author');
-const {auth} = require("mysql/lib/protocol/Auth");
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -33,6 +32,8 @@ var app = http.createServer(function(request,response){
         author.update(request, response);
     } else if (pathname === '/author/update_process') {
         author.update_process(request, response);
+    } else if (pathname === '/author/delete_process') {
+        author.delete_process(request, response);
     } else {
         response.writeHead(404);
         response.end('Not found');

@@ -115,8 +115,6 @@ exports.update_process = function (request, response) {
     request.on('end', function(){
         var post = qs.parse(body);
 
-        console.log(post);
-
         db.query(`UPDATE author SET name = ?, profile = ? WHERE id = ?`,
             [post.name, post.profile, post.id], function (error, result) {
                 if (error) {
@@ -126,6 +124,33 @@ exports.update_process = function (request, response) {
                 response.writeHead(302, {Location: `/author`});
                 response.end();
             });
+    });
+};
+
+exports.delete_process = function (request, response) {
+    var body = '';
+
+    request.on('data', function(data){
+        body = body + data;
+    });
+
+    request.on('end', function(){
+        var post = qs.parse(body);
+        db.query(`DELETE FROM topic WHERE author_id = ?`, [post.id],
+            function (error1, result1) {
+                if (error1) {
+                    throw error1;
+                }
+                db.query(`DELETE FROM author WHERE id = ?`,
+                    [post.id], function (error2, result2) {
+                        if (error2) {
+                            throw error2;
+                        }
+
+                        response.writeHead(302, {Location: `/author`});
+                        response.end();
+                });
+        });
     });
 };
 
