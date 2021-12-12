@@ -8,6 +8,7 @@ var qs = require('querystring');
 var bodyParser = require('body-parser');
 var compression = require('compression');
 
+app.use(express.static('public'));
 app.use(bodyParser.urlencoded({extended: false}));
 // main.js가 실행되면서 app.use안에 해당 bodyParser 미들웨어가 들어오게 된다. 또한 실행된다.
 // 사용자가 전송한 post 데이터를 내부적으로 분석해서 request에 body 프로퍼티를 만든다. => request.body를 사용 가능하다.
@@ -28,7 +29,8 @@ app.get('/', function (request, response) {
     var description = 'Hello, Node.js';
     var list = template.list(request.list);
     var html = template.HTML(title, list,
-        `<h2>${title}</h2>${description}`,
+        `<h2>${title}</h2>${description}
+                <img src="/images/hello.jpg" style="width: 300px; display:block; margin-top:10px;">`,
         `<a href="/create">create</a>`
     );
     response.send(html);
