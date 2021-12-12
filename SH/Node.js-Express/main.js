@@ -5,6 +5,11 @@ var template = require('./lib/template.js');
 var path = require('path');
 var sanitizeHtml = require('sanitize-html');
 var qs = require('querystring');
+var bodyParser = require('body-parser');
+
+app.use(bodyParser.urlencoded({extended: false}));
+// main.js가 실행되면서 app.use안에 해당 bodyParser 미들웨어가 들어오게 된다. 또한 실행된다.
+// 사용자가 전송한 post 데이터를 내부적으로 분석해서 request에 body 프로퍼티를 만든다. => request.body를 사용 가능하다.
 
 app.get('/', function (request, response) {
     fs.readdir('./data', function(error, filelist){
@@ -63,19 +68,13 @@ app.get('/create', function (request, response) {
 });
 
 app.post('/create_process', function (request, response) {
-    var body = '';
-    request.on('data', function(data){
-        body = body + data;
-    });
-    request.on('end', function(){
-        var post = qs.parse(body);
-        var title = post.title;
-        var description = post.description;
-        fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-            response.writeHead(302, {Location: `/page/${title}`});
-            response.end();
-        })
-    });
+    var post = request.body;
+    var title = post.title;
+    var description = post.description;
+    fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+        response.writeHead(302, {Location: `/page/${title}`});
+        response.end();
+    })
 });
 
 app.get('/update/:pageId', function (request, response) {
@@ -105,36 +104,24 @@ app.get('/update/:pageId', function (request, response) {
 });
 
 app.post('/update_process', function (request, response) {
-    var body = '';
-    request.on('data', function(data){
-        body = body + data;
-    });
-    request.on('end', function(){
-        var post = qs.parse(body);
-        var id = post.id;
-        var title = post.title;
-        var description = post.description;
-        fs.rename(`data/${id}`, `data/${title}`, function(error){
-            fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-                response.redirect(`/page/${title}`);
-            })
-        });
+    var post = request.body;
+    var id = post.id;
+    var title = post.title;
+    var description = post.description;
+    fs.rename(`data/${id}`, `data/${title}`, function(error){
+        fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+            response.redirect(`/page/${title}`);
+        })
     });
 });
 
 app.post('/delete_process', function (request, response) {
-    var body = '';
-    request.on('data', function(data){
-        body = body + data;
-    });
-    request.on('end', function(){
-        var post = qs.parse(body);
-        var id = post.id;
-        var filteredId = path.parse(id).base;
-        fs.unlink(`data/${filteredId}`, function(error){
-            response.redirect('/')
-        })
-    });
+    var post = request.body;
+    var id = post.id;
+    var filteredId = path.parse(id).base;
+    fs.unlink(`data/${filteredId}`, function(error){
+        response.redirect('/')
+    })
 });
 
 app.listen(3000, function () {
