@@ -2,7 +2,7 @@ var http = require('http');
 var cookie = require('cookie');
 http.createServer(function (request, response) {
 
-    // 쿠키 읽기기
+    // 쿠키 읽기
    var cookies = {};
 
     if (request.headers.cookie !== undefined) {
