@@ -5,15 +5,16 @@ var fs = require('fs');
 var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
 
-router.get('/login', function(request, response){
-    var fmsg = request.flash();
-    var feedback = '';
-    if (fmsg.error) {
-        feedback = fmsg.error[0];
-    }
-    var title = 'WEB - login';
-    var list = template.list(request.list);
-    var html = template.HTML(title, list, `
+module.exports = function(passport) {
+    router.get('/login', function(request, response){
+        var fmsg = request.flash();
+        var feedback = '';
+        if (fmsg.error) {
+            feedback = fmsg.error[0];
+        }
+        var title = 'WEB - login';
+        var list = template.list(request.list);
+        var html = template.HTML(title, list, `
       <div style="color:red;">${feedback}</div>
       <form action="/auth/login_process" method="post">
         <p><input type="text" name="email" placeholder="email"></p>
@@ -23,14 +24,26 @@ router.get('/login', function(request, response){
         </p>
       </form>
     `, '');
-    response.send(html);
-  });
+        response.send(html);
+    });
 
-router.get('/logout', function(request, response){
-    request.logout();
-    request.session.save(function() {   // 현재 세션의 상태를 저장
-        response.redirect('/');
-    })
-});
+    router.post('/login_process',
+        passport.authenticate('local', {  // local: username과 password로 로그인하는것, local이 아닌 그외방식은 facebook, google등으로 로그인 하는것
+            failureRedirect: '/auth/login', // 실패시
+            failureFlash: true,    // 알수없는 오류로 플래쉬메세지 세션저장소에 추가 불가.. 추후 확인필요
+            successFlash: true
+        }), (req, res) => {
+            req.session.save(() => {
+                res.redirect('/');
+            });
+        });
 
-  module.exports = router;
+    router.get('/logout', function(request, response){
+        request.logout();
+        request.session.save(function() {   // 현재 세션의 상태를 저장
+            response.redirect('/');
+        })
+    });
+
+    return router;
+};
