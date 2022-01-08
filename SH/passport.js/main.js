@@ -6,6 +6,7 @@ var compression = require('compression');
 var helmet = require('helmet');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
+var flash = require('connect-flash');
 
 app.use(helmet());
 
@@ -19,6 +20,19 @@ app.use(session({
   saveUninitialized: true,
   store: new FileStore()
 }));
+app.use(flash());   // 내부적으로 세션을 사용하므로 session 코드 아래에 위치해야함. flash미들웨어를 express에 설치
+// --- flash 예제 ---
+// app.get('/flash', function (req, res) {
+//     req.flash('msg', 'Flash is back!');     // 세션스토어에 입력한 데이터를 추가한다.
+//     res.send('flash');
+// });
+//
+// app.get('/flash-display', function (req, res) {
+//     var fmsg = req.flash(); // 데이터를 사용한 뒤 지운다. 일회성 메세지
+//     console.log(fmsg);
+//     res.send(fmsg);
+// });
+// --- /flash 예제 ---
 
 var authData = {
     email: 'egoing@gmail.com',
@@ -70,7 +84,9 @@ passport.use(new LocalStrategy(
 
 app.post('/auth/login_process',
     passport.authenticate('local', {  // local: username과 password로 로그인하는것, local이 아닌 그외방식은 facebook, google등으로 로그인 하는것
-      failureRedirect: '/auth/login' // 실패시
+      failureRedirect: '/auth/login', // 실패시
+      failureFlash: true,    // 알수없는 오류로 플래쉬메세지 세션저장소에 추가 불가.. 추후 확인필요
+      successFlash: true
     }), (req, res) => {
         req.session.save(() => {
             res.redirect('/');
