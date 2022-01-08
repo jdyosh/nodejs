@@ -16,8 +16,8 @@ app.use(compression());
 app.use(session({
   secret: 'asdfgg',
   resave: false, // true로 할경우 session을 미리 만드는것이도 false로 할경우는 session을 저장할때에 생성되게 한것입니다.
-  saveUninitialized: false,
-  store: new FileStore({path:'./sessions',logFn:function(){}})
+  saveUninitialized: true,
+  store: new FileStore()
 }));
 
 var authData = {
@@ -70,9 +70,12 @@ passport.use(new LocalStrategy(
 
 app.post('/auth/login_process',
     passport.authenticate('local', {  // local: username과 password로 로그인하는것, local이 아닌 그외방식은 facebook, google등으로 로그인 하는것
-      successRedirect: '/', // 성공시
       failureRedirect: '/auth/login' // 실패시
-    }));
+    }), (req, res) => {
+        req.session.save(() => {
+            res.redirect('/');
+        });
+    });
 // / passport 관련
 
 

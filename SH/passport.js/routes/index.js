@@ -4,7 +4,7 @@ var template = require('../lib/template.js');
 var auth = require('../lib/auth');
 
 router.get('/', function(request, response) {
-    console.log('/', request.user);
+    console.log('/', request.user); // passport를 사용하지 않으면 request는 user라는 객체를 가질 수 없다.
     var title = 'Welcome';
     var description = 'Hello, Node.js';
     var list = template.list(request.list);
