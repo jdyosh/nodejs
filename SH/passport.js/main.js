@@ -6,6 +6,7 @@ var compression = require('compression');
 var helmet = require('helmet');
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
+var flash = require('connect-flash');
 
 app.use(helmet());
 
@@ -19,65 +20,22 @@ app.use(session({
   saveUninitialized: true,
   store: new FileStore()
 }));
+app.use(flash());   // 내부적으로 세션을 사용하므로 session 코드 아래에 위치해야함. flash미들웨어를 express에 설치
+// --- flash 예제 ---
+// app.get('/flash', function (req, res) {
+//     req.flash('msg', 'Flash is back!');     // 세션스토어에 입력한 데이터를 추가한다.
+//     res.send('flash');
+// });
+//
+// app.get('/flash-display', function (req, res) {
+//     var fmsg = req.flash(); // 데이터를 사용한 뒤 지운다. 일회성 메세지
+//     console.log(fmsg);
+//     res.send(fmsg);
+// });
+// --- /flash 예제 ---
 
-var authData = {
-    email: 'egoing@gmail.com',
-    password: '1111',
-    nickname: 'egoing'
-};
-
-// passport 관련
-// passport는 세션을 내부적으로 사용하므로 express-session을 활성화시키는 코드 다음에 와야 한다.
-var passport = require('passport')
-    , LocalStrategy = require('passport-local').Strategy;
-
-app.use(passport.initialize());  // passport 미들웨어를 express에 설치
-app.use(passport.session());    // 내부적으로 passport는 세션 위에서 동작하므로
-
-passport.serializeUser(function(user, done) {   // 로그인에 성공했을 때 딱 한번 호출한다.
-    console.log('serializeUser', user);
-    // 세션 데이터 안에 passport user 값으로 사용자의 식별자가 저장된다.
-    done(null, user.email);  // 두번째인자는 구분되는 식별자.
-});
-
-passport.deserializeUser(function (id, done) { // 페이지를 방문할 때 마다 호출된다. 로그인한 사용자인지 아닌지 체크할때 사용한다.
-    console.log('deserializeUser', id);
-    done(null, authData);
-});
-
-passport.use(new LocalStrategy(
-    {   // form 에서 아이디 비밀번호를 넘겨줄때 username, password 라는 name으로 넘겨야 하는데 다른이름으로 넘기고 싶을때
-        usernameField: 'email',
-        passwordField: 'pwd'
-    },
-    function (username, password, done) {   // done이라는 함수를 어떻게 호출하냐에 따라 성공실패를 알려준다
-        console.log('LocalStrategy', username, password);
-        if (username === authData.email) {
-            if (password === authData.password) {
-                return done(null, authData);    // 바로 다음에 passport.serializeUser를 호출한다.
-            } else {
-                return done(null, false, {
-                    message: 'Incorrect password.'
-                });
-            }
-        } else {
-            return done(null, false, {
-                message: 'Incorrect username.'
-            });
-        }
-    }
-));
-
-app.post('/auth/login_process',
-    passport.authenticate('local', {  // local: username과 password로 로그인하는것, local이 아닌 그외방식은 facebook, google등으로 로그인 하는것
-      failureRedirect: '/auth/login' // 실패시
-    }), (req, res) => {
-        req.session.save(() => {
-            res.redirect('/');
-        });
-    });
-// / passport 관련
-
+var passport = require('./lib/passport')(app);  // passport 파일에서 함수자체를 export시켰기 때문에 passport륾 require한것 자체가 함수이며, 파라미터로는 app을 넘긴다.
+                                // passport파일에서 passport객체를 리턴시키므로 require('./lib/passport')(app) 자체는 passport객체가 된다.
 
 app.get('*', function(request, response, next){
   fs.readdir('./data', function(error, filelist){
@@ -88,7 +46,7 @@ app.get('*', function(request, response, next){
 
 var indexRouter = require('./routes');
 var topicRouter = require('./routes/topic');
-var authRouter = require('./routes/auth');
+var authRouter = require('./routes/auth')(passport);  // 함수를 호출하면서 인자로 passport를 주입한다. 함수명옆에 () 이면 함수를 호출하는 것이다.
 
 app.use('/', indexRouter);
 app.use('/topic', topicRouter);
