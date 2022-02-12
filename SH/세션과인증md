@@ -1,0 +1,102 @@
+# 미들웨어 express session의 구동
+
+express-session 모듈 설치
+
+```java
+npm install -s express-session
+```
+
+# express-session의 옵션
+
+session 함수에 전달하는 객체에 따라 세션이 동작하는 기본적인 동작방법을 바꿀 수 있다.
+
+```java
+var session = require('express-session');
+var app = express();
+
+app.use(session({
+	secret: 'kekyboard cat',
+	resave: false,
+	saveUninitialized: true
+}));
+```
+
+- secret - required 옵션.(필수) 다른사람한테 노출되면 안되는 코드. 버전관리시에는 소스코드에 포함시키면 안되고, 별도의 파일로 빼서 관리
+- resave - false로 지정. false 면 세션데이터가 바뀌기 전까지는 세션저장소의 값을 저장하지 않는다. true면 값이 바뀌건 바뀌지 않았건 계속 저장소에 저장을 한다.
+- saveUninitialized - true면 세션이 필요하기 전까지는 세션을 구동시키지 않는다. false면 세션이 필요하건 필요하지 않건 무조건 구동시키므로  서버에 큰 부담을 줄 수 있다.
+
+# express-session의 session 객체
+
+express-session의 핵심은 request 객체의 멤버인 session객체이다.
+
+```java
+var session = require('express-session');
+var app = express();
+
+app.use(session({
+	secret: 'kekyboard cat',
+	resave: false,
+	saveUninitialized: true
+}));
+```
+
+session 미들웨어는 내부적으로 조용히 request 객체의 프로퍼티로 세션이라는 객체를 추가한다.
+
+```java
+app.get('/', function (req, res, next) {
+    console.log(req.session);
+    if (req.session.num === undefined) {
+        req.session.num = 1;
+    } else {
+        req.session.num = req.session.num + 1;
+    }
+    res.send(`Views : ${req.session.num}`);
+});
+```
+
+세션미들웨어는 내부적으로 세션저장소에 num이라는 이름으로 값을 저장한다.
+
+이 정보는 메모리에 저장되므로 서버를 끄면 메모리의 정보가 사라진다. 휘발된다. 
+
+# express-session의 session store
+
+세션 데이터의 저장소를 세션 저장소라고 한다.
+
+세션객체에 store: new FileStore()를 추가한다.
+
+```java
+npm install -s session-file-store
+```
+
+```java
+var session = require('express-session');
+var FileStore = require('session-file-store')(session)
+
+var app = express()
+
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: true,
+    store: new FileStore()
+}));
+```
+
+실행시키면 session 폴더에 세션값이 저장되어있는 파일이 생성된다.
+
+- 사용자가 세션아이디를 가지고 있는 상태에서 서버로 접속하면 request header에 쿠키값으로 세션아이디를 전달한다.
+- 세션 미들웨어가 전달받은 세션아이디값을 가지고 session store에서 세션아이디값에 대응되는 파일을 읽고 그 안에 데이터를 기반으로 request객체의 session 프로퍼티에 객체를 추가한다.
+
+### 세션삭제시(로그아웃시)
+
+```java
+request.session.destroy(function (err) {
+        response.redirect('/');
+    });
+```
+
+기존의 세션이 삭제되고 새로운 세션이 생성된다.
+
+### 세션저장
+
+세션미들웨어는 메모리에 저장한 데이터를 (request.session.is_logined 같은) 세션스토어에 기록하는 작업(저장소에 반영하는 작업)을 시작하는데 저장소가 어떤 이유로 인해 느려졌을 때 저장되기도 전에 그 아래 코드가 실행됨을 방지하기 위해 request.session.save(function() {}); 함수를 사용한다.
